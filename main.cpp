@@ -17,7 +17,10 @@ int main()
 			<< "-EXP " << p1.getCurrentEXP() << '/' << p1.getEXPToNextLevel() << '\n'
 			<< "-HP " << p1.getCurrentHP() << '/'  << p1.getMaxHP() << '\n'
 			<< "-Strenght " << p1.getStrenght() << '\n'
-			<< "-Intellect " << p1.getIntellect() << '\n';
+			<< "-Agility " << p1.getAgility() << '\n'
+			<< "-Intellect " << p1.getIntellect() << '\n'
+			<< "-Armor " << p1.getArmor() << '\n'
+			<< "-Elemental Resistance " << p1.getElementRes() << '\n';
 		
 		if (i < 1)
 			p1.gainEXP(100u);
