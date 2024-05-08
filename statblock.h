@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-
+#include "Buff.h"
 typedef std::uint16_t stattype;
 
 class StatBlock
@@ -27,8 +27,10 @@ public:
 	stattype getArmor() { return Armor; }
 	stattype getElementRes() { return ElementRes; }
 
+	
+	
 protected:
-
+	std::vector<Buff> Buffs;
 	void increaseStats(stattype s = 0, stattype a = 0, stattype i = 0, stattype arm = 0, stattype elres = 0) {
 		Strength += s;
 		Agility += a;

@@ -37,6 +37,20 @@ public:
 
 	exptype getEXPToNextLevel() { return EXPToNextLevel; }
 
+	void applyBuff(Buff b)
+	{
+		for (auto& buff : Buffs)
+		{
+			if (b.Name == buff.Name)
+			{
+				buff.Durotation = b.Durotation;
+				return;
+			}
+		}
+
+		Buffs.push_back(b);
+	}
+
 	virtual void LevelUp() = 0;
 
 	virtual std::string getClassName() = 0;
@@ -269,6 +283,11 @@ public:
 	void gainEXP(exptype amt){ pcclass->gainEXP(amt); }
 	void takeDamage(welltype amt) { pcclass->HP->reduceCurrent(amt); }
 	void heal(welltype amt) { pcclass->HP->increaseCurrent(amt); }
+
+	void ApplyBuff(Buff buff)
+	{
+		pcclass->applyBuff(buff);
+	}
 
 };
 
