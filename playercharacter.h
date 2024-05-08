@@ -2,8 +2,10 @@
 #include <cstdint>
 #include "pointwell.h"
 #include "statblock.h"
-#include <memory>
 #include <string>
+#include <memory>
+#include "ability.h"
+#include <vector>
 
 typedef std::uint16_t leveltype;
 typedef std::uint64_t exptype;
@@ -17,10 +19,10 @@ public:
 
 	PlayerCharacterDelegate() : StatBlock(0u, 0u)
 	{
-		CurrentLevel = 1u;
-		CurrentEXP = 0u;
+		CurrentLevel = (leveltype)1u;
+		CurrentEXP = (exptype)0u;
 		EXPToNextLevel = LEVEL2AT;
-		HP = std::make_unique<PointWell>();
+		HP = std::make_unique<PointWell>(1u, 1u);
 	}
 
 	void gainEXP(exptype gainedEXP)
@@ -39,7 +41,10 @@ public:
 
 	virtual std::string getClassName() = 0;
 
-	std::unique_ptr<PointWell> HP;
+	std::unique_ptr <PointWell> HP;
+	std::unique_ptr <PointWell> MP;
+
+	std::vector<Ability> Abilities;
 
 protected:
 	leveltype CurrentLevel;
@@ -60,37 +65,160 @@ protected:
 	
 };
 
-#define PCCONSTRUCT : PlayerCharacterDelegate()\
+#define PCCONSTRUCT \
+HP->setMax(BASEHP);\
+HP->increaseCurrent(BASEHP);\
+if(MP)\
 {\
-	HP->setMax(BASEHP);\
-	HP->increaseCurrent(BASEHP);\
-	increaseStats(BASEINT, BASEINT);\
-}
+	MP->setMax(BASEMP);\
+	MP->increaseCurrent(BASEMP);\
+}\
+increaseStats(BASESTR, BASEAGI, BASEINT);\
 
-#define CHARACTERCLASS(classname, basehp, basestr, baseint, baseagi) \
-class classname : public PlayerCharacterDelegate {\
-public:\
-	static const welltype BASEHP = (welltype)basehp;\
-	static const stattype BASESTR = (stattype)basestr;\
-	static const stattype BASEINT = (stattype)baseint;\
-	static const stattype BASEAGI = (stattype)baseagi;\
-	std::string getClassName() override { return std::string(#classname); }\
-	classname() PCCONSTRUCT \
-private:\
-	LEVELUP \
-};
-
-#define LEVELUP void LevelUp() override {\
+#define LEVELUP \
 HP->setMax((welltype)((BASEHP / 2.f) + HP->getMax()));\
 HP->increaseCurrent((welltype)(BASEHP / 2.f));\
+if(MP)\
+{\
+	MP->setMax((welltype)((BASEMP / 2.f) + HP->getMax())); \
+	MP->increaseCurrent((welltype)(BASEMP / 2.f)); \
+}\
 increaseStats((stattype)((BASESTR + 1u) / 2.f), (stattype)((BASEAGI + 1u) / 2.f), (stattype)((BASEINT + 1u) / 2.f));\
-}
 
-CHARACTERCLASS(Warrior, 14, 3, 5, 1)
-CHARACTERCLASS(Paladin, 10, 1, 8, 1)
-CHARACTERCLASS(Rogue, 18, 5, 2, 2)
-CHARACTERCLASS(Wizard, 12, 3, 3, 5)
-CHARACTERCLASS(Cleric, 12, 3, 3, 5)
+class Warrior : public PlayerCharacterDelegate {
+
+public:
+	static const welltype BASEHP = (welltype)14u;
+	static const welltype BASEMP = (stattype)10u;
+	static const stattype BASESTR = (stattype)3u;
+	static const stattype BASEAGI = (stattype)5u;
+	static const stattype BASEINT = (stattype)5u;
+	std::string getClassName() override { return std::string("Warrior"); }
+	Warrior() : PlayerCharacterDelegate()
+	{
+		//MP = std::make_unique<PointWell>(BASEMP, BASEMP);// must init before pcconstruct macro
+		PCCONSTRUCT
+		Abilities.emplace_back("Heroic Strike", 0u, 1u, ABILITYTARGET::ENEMY, 2u, ABILITYSCALAR::STR);
+		
+	}
+private:
+	void LevelUp() override
+	{
+		LEVELUP
+			if (CurrentLevel == 2)
+			{
+				Abilities.emplace_back("Slam", 0u, 1u, ABILITYTARGET::ENEMY, 2u, ABILITYSCALAR::STR);
+			}
+	}
+};
+
+class Paladin : public PlayerCharacterDelegate {
+	
+public:
+		static const welltype BASEHP = (welltype)14u;
+		static const welltype BASEMP = (stattype)10u;
+		static const stattype BASESTR = (stattype)3u; 
+		static const stattype BASEAGI = (stattype)5u; 
+		static const stattype BASEINT = (stattype)5u; 
+		std::string getClassName() override { return std::string("Paladin"); }
+		Paladin() : PlayerCharacterDelegate()
+		{
+			MP = std::make_unique<PointWell>(BASEMP,BASEMP);// must init before pcconstruct macro
+			PCCONSTRUCT
+			Abilities.emplace_back("Crusader's Strike", 2u, 1u, ABILITYTARGET::ENEMY, 2u, ABILITYSCALAR::STR);
+			Abilities.emplace_back("Heal", 2u, 1u, ABILITYTARGET::ALLY, 2u, ABILITYSCALAR::INT);
+		}
+private:
+	void LevelUp() override 
+	{
+		LEVELUP
+		if (CurrentLevel == 2)
+		{
+			Abilities.emplace_back("Judgement", 2u, 1u, ABILITYTARGET::ENEMY, 2u, ABILITYSCALAR::STR);
+		}
+	}
+};
+
+class Rogue : public PlayerCharacterDelegate {
+
+public:
+	static const welltype BASEHP = (welltype)14u;
+	static const welltype BASEMP = (stattype)10u;
+	static const stattype BASESTR = (stattype)3u;
+	static const stattype BASEAGI = (stattype)5u;
+	static const stattype BASEINT = (stattype)5u;
+	std::string getClassName() override { return std::string("Rogue"); }
+	Rogue() : PlayerCharacterDelegate()
+	{
+		//MP = std::make_unique<PointWell>(BASEMP, BASEMP);// must init before pcconstruct macro
+		PCCONSTRUCT
+		Abilities.emplace_back("Slash", 0u, 1u, ABILITYTARGET::ENEMY, 2u, ABILITYSCALAR::STR);
+
+	}
+private:
+	void LevelUp() override
+	{
+		LEVELUP
+			if (CurrentLevel == 2)
+			{
+				Abilities.emplace_back("Pierce", 0u, 1u, ABILITYTARGET::ENEMY, 2u, ABILITYSCALAR::STR);
+			}
+	}
+};
+
+class Wizard : public PlayerCharacterDelegate {
+
+public:
+	static const welltype BASEHP = (welltype)14u;
+	static const welltype BASEMP = (stattype)10u;
+	static const stattype BASESTR = (stattype)3u;
+	static const stattype BASEAGI = (stattype)5u;
+	static const stattype BASEINT = (stattype)5u;
+	std::string getClassName() override { return std::string("Wizard"); }
+	Wizard() : PlayerCharacterDelegate()
+	{
+		MP = std::make_unique<PointWell>(BASEMP, BASEMP);// must init before pcconstruct macro
+		PCCONSTRUCT
+		Abilities.emplace_back("Firebolt", 2u, 1u, ABILITYTARGET::ENEMY, 4u, ABILITYSCALAR::STR);
+		//Abilities.emplace_back("Frost Shield", 2u, 1u, ABILITYTARGET::ALLY, 2u, ABILITYSCALAR::INT); 
+	}
+private:
+	void LevelUp() override
+	{
+		LEVELUP
+			if (CurrentLevel == 2)
+			{
+				Abilities.emplace_back("Fire Blast", 5u, 2u, ABILITYTARGET::ENEMY, 5u, ABILITYSCALAR::STR);
+			}
+	}
+};
+
+class Cleric : public PlayerCharacterDelegate {
+
+public:
+	static const welltype BASEHP = (welltype)14u;
+	static const welltype BASEMP = (stattype)10u;
+	static const stattype BASESTR = (stattype)3u;
+	static const stattype BASEAGI = (stattype)5u;
+	static const stattype BASEINT = (stattype)5u;
+	std::string getClassName() override { return std::string("Cleric"); }
+	Cleric() : PlayerCharacterDelegate()
+	{
+		MP = std::make_unique<PointWell>(BASEMP, BASEMP);// must init before pcconstruct macro
+		PCCONSTRUCT
+		Abilities.emplace_back("Smite", 2u, 1u, ABILITYTARGET::ENEMY, 4u, ABILITYSCALAR::STR);
+		Abilities.emplace_back("Heal", 2u, 1u, ABILITYTARGET::ALLY, 2u, ABILITYSCALAR::INT); 
+	}
+private:
+	void LevelUp() override
+	{
+		LEVELUP
+			if (CurrentLevel == 2)
+			{
+				Abilities.emplace_back("Holy Blast", 3u, 2u, ABILITYTARGET::ENEMY, 3u, ABILITYSCALAR::STR);
+			}
+	}
+};
  
 class PlayerCharacter
 {
@@ -110,17 +238,35 @@ public:
 	exptype getEXPToNextLevel() { return pcclass->getEXPToNextLevel(); }
 	welltype getCurrentHP() { return pcclass->HP->getCurrent(); }
 	welltype getMaxHP() { return pcclass->HP->getMax(); }
+
+	welltype getCurrentMP() 
+	{ 
+		if (pcclass->MP)
+		{
+			return pcclass->MP->getCurrent();
+		}
+		else
+			return 0;
+	}
+	welltype getMaxMP() 
+	{ 
+		if (pcclass->MP) 
+		{
+			return pcclass->MP->getMax();
+		}
+		else
+			return 0;
+	}
+
 	stattype getStrenght() { return pcclass->getStrength(); }
 	stattype getIntellect() { return pcclass->getIntellect(); }
 	stattype getAgility() { return pcclass->getAgility(); }
 	stattype getArmor() { return pcclass->getArmor(); }
 	stattype getElementRes() { return pcclass->getElementRes(); }
 
-	void gainEXP(exptype amt)
-	{
-		pcclass->gainEXP(amt);
-	}
+	std::vector<Ability> getAbilities() { return pcclass->Abilities; }
 
+	void gainEXP(exptype amt){ pcclass->gainEXP(amt); }
 	void takeDamage(welltype amt) { pcclass->HP->reduceCurrent(amt); }
 	void heal(welltype amt) { pcclass->HP->increaseCurrent(amt); }
 

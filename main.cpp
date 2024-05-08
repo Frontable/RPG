@@ -1,11 +1,6 @@
 #include <iostream>
 #include "playercharacter.h"
 
-
-
-
-
-
 int main()
 {
 	PlayerCharacter p1(new Paladin());
@@ -22,6 +17,12 @@ int main()
 			<< "-Armor " << p1.getArmor() << '\n'
 			<< "-Elemental Resistance " << p1.getElementRes() << '\n';
 		
+		auto Abilities = p1.getAbilities();
+		std::cout<<"-Abilities: \n";
+		for (auto& abi : Abilities)
+		{
+			std::cout << " -" << abi.Name << "\n";
+		}
 		if (i < 1)
 			p1.gainEXP(100u);
 	}
